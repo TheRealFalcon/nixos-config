@@ -26,23 +26,56 @@
   };
   system.stateVersion = "24.05"; # Did you read the comment?
 
+  imports = [
+    # Include the results of the hardware scan.
+    ./hardware-configuration.nix
+  ];
+
+  time.timeZone = "America/Chicago";
+
+  # Select internationalisation properties.
+  i18n.defaultLocale = "en_US.UTF-8";
+
+  i18n.extraLocaleSettings = {
+    LC_ADDRESS = "en_US.UTF-8";
+    LC_IDENTIFICATION = "en_US.UTF-8";
+    LC_MEASUREMENT = "en_US.UTF-8";
+    LC_MONETARY = "en_US.UTF-8";
+    LC_NAME = "en_US.UTF-8";
+    LC_NUMERIC = "en_US.UTF-8";
+    LC_PAPER = "en_US.UTF-8";
+    LC_TELEPHONE = "en_US.UTF-8";
+    LC_TIME = "en_US.UTF-8";
+  };
+
+  # Configure keymap in X11
+  services.xserver.xkb = {
+    layout = "us";
+    variant = "";
+  };
+
+  nixpkgs.config.allowUnfree = true;
+
   environment.systemPackages = with pkgs; [
     bashInteractive
     coreutils
     fd
     findutils
     git
+    jq
     jujutsu
     less
     lsof
     man
     mg
     ncdu
+    nix-index
     procps
     shadow
     strace
     util-linux
     vim
+    wget
     zlib-ng
   ];
 
@@ -135,6 +168,8 @@
     "z /var/lib/private/james.pw 0600 root root"
     "z /var/lib/private/syncthing-key.pem 0400 james users"
     "z /var/lib/private/syncthing-cert.pem 0440 james users"
+    "z /var/lib/private/linkwarden.env 0400 linkwarden linkwarden"
+    "z /var/lib/private/linkwarden_api_token 0400 root root"
 
     # SSH keys
     "f+ /home/james/.ssh/id_rsa.pub 0644 james users"
@@ -142,6 +177,30 @@
     "z /var/lib/private/id_rsa 0600 james users"
     "L+ /home/james/.ssh/id_rsa - - - - /var/lib/private/id_rsa"
   ];
+
+  systemd.timers."linkwarden-backup" = {
+    description = "Backup Linkwarden data";
+    wantedBy = [ "timers.target" ];
+    timerConfig = {
+      OnCalendar = "weekly";
+      Persistent = true;
+      Unit = "linkwarden-backup.service";
+    };
+  };
+
+  systemd.services."linkwarden-backup" = {
+    script = ''
+      curl  --request GET \
+            --url http://192.168.1.43:3000/api/v1/migration \
+            --header 'Accept: application/json' \
+            --header "Authorization: Bearer $(cat /var/lib/private/linkwarden_api_token)" \
+            --output /data/linkwarden-backup.json
+    '';
+    serviceConfig = {
+      Type = "oneshot";
+      User = "root";
+    };
+  };
 
   services.audiobookshelf = {
     enable = true;
@@ -187,6 +246,15 @@
 
   services.jellyfin = {
     enable = true;
+    openFirewall = true;
+  };
+
+  services.linkwarden = {
+    enable = true;
+    enableRegistration = true;
+    environmentFile = "/var/lib/private/linkwarden.env";
+    host = "0.0.0.0";
+    port = 3000;
     openFirewall = true;
   };
 
@@ -254,5 +322,8 @@
     };
   };
 
-  services.tailscale.enable = true;
+  services.tailscale = {
+    enable = true;
+    authKeyFile = "/var/lib/private/tailscale_auth_key";
+  };
 }
