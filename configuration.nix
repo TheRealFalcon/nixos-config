@@ -72,7 +72,9 @@
     nix-index
     procps
     shadow
+    starship
     strace
+    tuckr
     util-linux
     vim
     wget
@@ -176,6 +178,9 @@
     "w /home/james/.ssh/id_rsa.pub - - - - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDVFCuncf2UzPNMH2qAupg0/8L3pIH6Y86lyfWa6nke/haXITT9xKsjLrau2aAGoyPBpgFah6TIqPIEaHCm8OjYzcpHQLRXbu3mCAK70E23ud8zubBiEZ3GSdvhedrNvxgo9p84UaEIPhDik30HzSiiv2oYrUmnnPFdacMXG8Q99khvSKnC15jylINFDAdzETKidDMV/p0xn5zVydwCxNzChJOb5nXzdTwXZ1YiB1vgRuGeOjZ77SwoTWkqFfDaUT4B7U88pTwOnAvQOIVd9LCQzcMUucAL4QdHK6XXtAciJUrG8I+h4xDt/JmpsQ4WbeYFukQt6pf1cpxSLWPigMhmFAygZZEft+gXkszELpMA6DBqy+VLjJ0/sNZzZvR7UwhG1n9o2OLdwxyw0Shxm0ZeFeFYNeNp6AaficHPEH+wGQuvgHuN35ZEgAw8MGLSoDdDPOxn5Py7gtz5fK4gSN+QtkaNFRIUZULoyBRDxr6SFVqnVvw8CxuCvkKfoygMXQk= james@cow\n"
     "z /var/lib/private/id_rsa 0600 james users"
     "L+ /home/james/.ssh/id_rsa - - - - /var/lib/private/id_rsa"
+
+    # Tuckr symlink
+    "L+ /home/james/.config/dotfiles - - - - /home/james/sync/configs/dotfiles"
   ];
 
   systemd.timers."linkwarden-backup" = {
