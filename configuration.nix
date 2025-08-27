@@ -190,7 +190,7 @@
 
   systemd.services."linkwarden-backup" = {
     script = ''
-      curl  --request GET \
+      /run/current-system/sw/bin/curl  --request GET \
             --url http://192.168.1.43:3000/api/v1/migration \
             --header 'Accept: application/json' \
             --header "Authorization: Bearer $(cat /var/lib/private/linkwarden_api_token)" \
