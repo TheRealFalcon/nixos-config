@@ -9,6 +9,13 @@
 
 # nixos-rebuild switch --flake /etc/nixos#nixos
 
+# TODO:
+# networking.hostFiles = [ /etc/nixos/hosts.txt ];
+# services.dnsmasq.enable = true;
+# services.dnsmasq.alwaysKeepRunning = true;
+# services.dnsmasq.servers = [ "8.8.8.8" "8.8.4.4" ];
+# services.dnsmasq.extraConfig = "cache-size=500";/
+
 {
   config,
   pkgs,
@@ -23,6 +30,7 @@
     extraOptions = ''
       experimental-features = nix-command flakes
     '';
+    settings.download-buffer-size = 524288000;
   };
   system.stateVersion = "24.05"; # Did you read the comment?
 
@@ -54,16 +62,20 @@
     variant = "";
   };
 
-  nixpkgs.config.allowUnfree = true;
-
   environment.systemPackages = with pkgs; [
+    abcde
     bashInteractive
+    cddiscid
+    cdparanoia
     coreutils
     fd
     findutils
     git
+    id3
+    id3v2
     jq
     jujutsu
+    lame
     less
     lsof
     man
@@ -71,12 +83,14 @@
     ncdu
     nix-index
     procps
+    python313Packages.eyed3
     shadow
     starship
     strace
     tuckr
     util-linux
     vim
+    wavpack
     wget
     zlib-ng
   ];
@@ -116,12 +130,16 @@
     dhcpcd.enable = false;
     useDHCP = false;
     useHostResolvConf = false;
-    firewall.enable = true;
+    firewall = {
+        allowPing = true;
+        enable = true;
+        allowedTCPPorts = [
+            8123 # home-assistant
+            8384 # syncthing web GUI
+            22000 # syncthing sync
+        ];
+    };
   };
-  networking.firewall.allowedTCPPorts = [
-    8384 # syncthing web GUI
-    22000 # syncthing sync
-  ];
 
   systemd.network = {
     enable = true;
@@ -223,17 +241,40 @@
 
   services.home-assistant = {
     enable = true;
-    openFirewall = true; # Turning this on requires a declarative config
+    # openFirewall = true;  # Can only be used in declarative config
 
-    config = {
-      http.server_port = 8123;
-      http.server_host = "0.0.0.0";
+    # config = {
+    # http.server_port = 8123;
+    # http.server_host = "0.0.0.0";
+    # };
+    config = null;
+    lovelaceConfig = null;
+    configDir = "/etc/home-assistant";
+
+    # package = pkgs.home-assistant.override {
+    #   extraPackages = ps: [ ps.pynacl ];
+    # };
+    # package = (pkgs.callPackage pkgs.path {
+    #   inherit (pkgs) home-assistant;
+    # }).home-assistant.override {
+    #   extraPackages = ps: [ ps.pynacl ];
+    # };
+
+    package = pkgs.home-assistant.override {
+      extraPackages = ps: [
+        ps.aiodhcpwatcher
+        ps.aiodiscover
+        ps.aiousbwatcher
+        ps.async-upnp-client
+        ps.getmac
+        ps.go2rtc-client
+        ps.pynacl
+        ps.pyserial
+      ];
     };
 
     extraComponents = [
-      "analytics"
-      "emulated_kasa"
-      "file_upload"
+      # "analytics"
       "google"
       "google_assistant"
       "google_drive"
@@ -242,10 +283,11 @@
       "google_photos"
       "google_translate"
       "isal"
+      "met"
       "nest"
+      "radio_browser"
       "tailscale"
       "tplink"
-      "tuya"
     ];
   };
 
@@ -271,6 +313,37 @@
       KbdInteractiveAuthentication = false;
     };
   };
+  
+  services.samba = {
+    enable = true;
+    securityType = "user";
+    openFirewall = true;
+    settings = {
+      global = {
+        "workgroup" = "WORKGROUP";
+        "server string" = "NixOS Server";
+        "map to guest" = "Bad User";
+        "guest account" = "james";
+      };
+      "public" = {
+        path = "/home/james/share";
+        "guest ok" = true;
+        "valid users" = [ "james" ];
+        "read only" = false;
+        "browsable" = true;
+        "create mask" = "0644";
+        "directory mask" = "0755";
+        "force user" = "james";
+        "force group" = "users";
+        "public" = true;
+      };
+    };
+  };
+  
+  services.samba-wsdd = {
+    enable = true;
+    openFirewall = true;
+  };
 
   services.syncthing = {
     enable = true;
@@ -279,7 +352,7 @@
     user = "james";
     group = "users";
     configDir = "/home/james/.syncthingconfig"; # if ~/.config/syncthing, nixos will create ~/.config owned by root
-    extraFlags = [ "--no-default-folder" ]; # Don't create default ~/Sync folder
+    # extraFlags = [ "--no-default-folder" ]; # Don't create default ~/Sync folder
     key = "/var/lib/private/syncthing-key.pem";
     cert = "/var/lib/private/syncthing-cert.pem";
     settings = {

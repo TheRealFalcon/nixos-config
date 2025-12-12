@@ -5,14 +5,14 @@
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
-  inputs.linkwarden-pkgs.url = "github:jvanbruegge/nixpkgs/linkwarden";
+  # inputs.linkwarden-pkgs.url = "github:jvanbruegge/nixpkgs/linkwarden";
 
   outputs =
     {
       self,
       nixpkgs,
       flake-utils,
-      linkwarden-pkgs,
+      # linkwarden-pkgs,
       ...
     }:
     let
@@ -23,14 +23,14 @@
         nixos = nixpkgs.lib.nixosSystem {
           inherit system;
           modules = [
-            "${linkwarden-pkgs}/nixos/modules/services/web-apps/linkwarden.nix"
-            {
-              nixpkgs.overlays = [
-                (final: prev: {
-                  linkwarden = (import linkwarden-pkgs { inherit system; }).linkwarden;
-                })
-              ];
-            }
+            # "${linkwarden-pkgs}/nixos/modules/services/web-apps/linkwarden.nix"
+            # {
+            #   nixpkgs.overlays = [
+            #     (final: prev: {
+            #       linkwarden = (import linkwarden-pkgs { inherit system; }).linkwarden;
+            #     })
+            #   ];
+            # }
             ./configuration.nix
           ];
         };
