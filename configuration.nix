@@ -128,8 +128,6 @@
 
   networking = {
     dhcpcd.enable = false;
-    useDHCP = false;
-    useHostResolvConf = false;
     firewall = {
       allowPing = true;
       enable = true;
@@ -138,7 +136,11 @@
         8384 # syncthing web GUI
         22000 # syncthing sync
       ];
+      trustedInterfaces = [ "incusbr0" ];
     };
+    nftables.enable = true;
+    useDHCP = false;
+    useHostResolvConf = false;
   };
 
   systemd.network = {
@@ -175,7 +177,10 @@
       openssh.authorizedKeys.keys = [
         "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDVFCuncf2UzPNMH2qAupg0/8L3pIH6Y86lyfWa6nke/haXITT9xKsjLrau2aAGoyPBpgFah6TIqPIEaHCm8OjYzcpHQLRXbu3mCAK70E23ud8zubBiEZ3GSdvhedrNvxgo9p84UaEIPhDik30HzSiiv2oYrUmnnPFdacMXG8Q99khvSKnC15jylINFDAdzETKidDMV/p0xn5zVydwCxNzChJOb5nXzdTwXZ1YiB1vgRuGeOjZ77SwoTWkqFfDaUT4B7U88pTwOnAvQOIVd9LCQzcMUucAL4QdHK6XXtAciJUrG8I+h4xDt/JmpsQ4WbeYFukQt6pf1cpxSLWPigMhmFAygZZEft+gXkszELpMA6DBqy+VLjJ0/sNZzZvR7UwhG1n9o2OLdwxyw0Shxm0ZeFeFYNeNp6AaficHPEH+wGQuvgHuN35ZEgAw8MGLSoDdDPOxn5Py7gtz5fK4gSN+QtkaNFRIUZULoyBRDxr6SFVqnVvw8CxuCvkKfoygMXQk= james@cow"
       ];
-      extraGroups = [ "wheel" ];
+      extraGroups = [ 
+        "incus-admin"
+        "wheel"
+      ];
     };
   };
 
@@ -411,13 +416,15 @@
     authKeyFile = "/var/lib/private/tailscale_auth_key";
   };
   
-  virtualisation.oci-containers.containers = {
-    dispatcharr = {
-      image = "ghcr.io/dispatcharr/dispatcharr:latest";
-      ports = [ "9191:9191" ];
-      volumes = [
-        "dispatcharr_data:/data"
-      ];
-    };
+  virtualisation = {
+    incus.enable = true;
+    oci-containers.containers = {
+      dispatcharr = {
+        image = "ghcr.io/dispatcharr/dispatcharr:latest";
+        ports = [ "9191:9191" ];
+        volumes = [
+          "dispatcharr_data:/data"
+        ];
+      };
   };
 }
