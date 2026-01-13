@@ -426,5 +426,6 @@
           "dispatcharr_data:/data"
         ];
       };
+    };
   };
 }
