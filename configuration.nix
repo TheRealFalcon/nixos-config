@@ -131,13 +131,13 @@
     useDHCP = false;
     useHostResolvConf = false;
     firewall = {
-        allowPing = true;
-        enable = true;
-        allowedTCPPorts = [
-            8123 # home-assistant
-            8384 # syncthing web GUI
-            22000 # syncthing sync
-        ];
+      allowPing = true;
+      enable = true;
+      allowedTCPPorts = [
+        8123 # home-assistant
+        8384 # syncthing web GUI
+        22000 # syncthing sync
+      ];
     };
   };
 
@@ -268,8 +268,13 @@
         ps.async-upnp-client
         ps.getmac
         ps.go2rtc-client
+        ps.hassil
+        ps.home-assistant-intents
+        ps.mutagen
+        ps.pymicro-vad
         ps.pynacl
         ps.pyserial
+        ps.pyspeex-noise
       ];
     };
 
@@ -286,6 +291,7 @@
       "met"
       "nest"
       "radio_browser"
+      "spotify"
       "tailscale"
       "tplink"
     ];
@@ -313,7 +319,7 @@
       KbdInteractiveAuthentication = false;
     };
   };
-  
+
   services.samba = {
     enable = true;
     securityType = "user";
@@ -339,7 +345,7 @@
       };
     };
   };
-  
+
   services.samba-wsdd = {
     enable = true;
     openFirewall = true;
@@ -403,5 +409,15 @@
   services.tailscale = {
     enable = true;
     authKeyFile = "/var/lib/private/tailscale_auth_key";
+  };
+  
+  virtualisation.oci-containers.containers = {
+    dispatcharr = {
+      image = "ghcr.io/dispatcharr/dispatcharr:latest";
+      ports = [ "9191:9191" ];
+      volumes = [
+        "dispatcharr_data:/data"
+      ];
+    };
   };
 }
