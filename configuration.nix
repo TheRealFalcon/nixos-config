@@ -71,8 +71,9 @@
     fd
     findutils
     git
-    id3
-    id3v2
+    # id3  # giving stupid compile errors so just ignore these for now
+    # id3v2
+    htop
     jq
     jujutsu
     lame
@@ -127,47 +128,76 @@
   ];
 
   networking = {
+    useDHCP = false;
     dhcpcd.enable = false;
+    # useHostResolvConf = false;
+    nftables.enable = true;
+    
+    # The bridge definition
+    bridges."br0".interfaces = [ "enp0s31f6" ];
+
+    # 2. Hardware Pinning & IPv6 Tweaks
+    # This replaces the MatchConfig and LinkLocalAddressing from networkd
+    # Why the fuck did I do this? I have one interface...
+    # localCommands = ''
+    #   # Optional: Force the MAC address if the bridge doesn't inherit it correctly
+    #   ip link set br0 address 1c:1b:0d:1b:44:c4
+    # '';
+    
+    # Interfaces
+    interfaces."enp0s31f6".useDHCP = false;
+    interfaces."br0" = {
+        useDHCP = false;
+        ipv4.addresses = [{
+            address = "192.168.1.43";
+            prefixLength = 24;
+        }];
+        ipv6.addresses = [];
+    };
+    
+    # Routing and DNS
+    defaultGateway = "192.168.1.1";
+    nameservers = [ "8.8.8.8" "4.4.4.4" ];
+    
+    # Firewall
     firewall = {
       allowPing = true;
       enable = true;
       allowedTCPPorts = [
         8123 # home-assistant
         8384 # syncthing web GUI
+        8443 # incus https
         22000 # syncthing sync
       ];
-      trustedInterfaces = [ "incusbr0" ];
+      trustedInterfaces = [ "br0" "incusbr0" ];
     };
-    nftables.enable = true;
-    useDHCP = false;
-    useHostResolvConf = false;
   };
 
-  systemd.network = {
-    enable = true;
-    networks."enp0s31f6" = {
-      matchConfig = {
-        PermanentMACAddress = "1c:1b:0d:1b:44:c4";
-        Name = "enp0s31f6";
-      };
-      networkConfig = {
-        DHCP = "ipv4";
-        LinkLocalAddressing = "ipv6";
-        Address = "192.168.1.43/24";
-        IPv6AcceptRA = true;
-      };
-      dns = [
-        "8.8.8.8"
-        "4.4.4.4"
-      ];
-      routes = [
-        {
-          Destination = "0.0.0.0/0";
-          Gateway = "192.168.1.1";
-        }
-      ];
-    };
-  };
+#   systemd.network = {
+#     enable = true;
+#     networks."enp0s31f6" = {
+#       matchConfig = {
+#         PermanentMACAddress = "1c:1b:0d:1b:44:c4";
+#         Name = "enp0s31f6";
+#       };
+#       networkConfig = {
+#         DHCP = "ipv4";
+#         LinkLocalAddressing = "ipv6";
+#         Address = "192.168.1.43/24";
+#         IPv6AcceptRA = true;
+#       };
+#       dns = [
+#         "8.8.8.8"
+#         "4.4.4.4"
+#       ];
+#       routes = [
+#         {
+#           Destination = "0.0.0.0/0";
+#           Gateway = "192.168.1.1";
+#         }
+#       ];
+#     };
+#   };
 
   users.users = {
     james = {
@@ -276,9 +306,9 @@
         ps.hassil
         ps.home-assistant-intents
         ps.mutagen
-        ps.pymicro-vad
         ps.pynacl
         ps.pyserial
+        ps.pysilero-vad
         ps.pyspeex-noise
       ];
     };
@@ -327,7 +357,6 @@
 
   services.samba = {
     enable = true;
-    securityType = "user";
     openFirewall = true;
     settings = {
       global = {
@@ -335,6 +364,7 @@
         "server string" = "NixOS Server";
         "map to guest" = "Bad User";
         "guest account" = "james";
+        "security" = "user";
       };
       "public" = {
         path = "/home/james/share";
@@ -418,6 +448,33 @@
   
   virtualisation = {
     incus.enable = true;
+    # incus.preseed = {};
+    # config:
+    #   core.https_address: '[::]:8443'
+    #   images.auto_update_interval: "0"
+    # networks:
+    # - config:
+    #     ipv4.address: auto
+    #     ipv6.address: auto
+    #   description: ""
+    #   name: incusbr0
+    #   type: ""
+    #   project: default
+    # storage_pools: []
+    # storage_volumes: []
+    # profiles:
+    # - config: {}
+    #   description: ""
+    #   devices:
+    #     eth0:
+    #       name: eth0
+    #       network: incusbr0
+    #       type: nic
+    #   name: default
+    #   project: default
+    # projects: []
+    # certificates: []
+    # cluster: null
     oci-containers.containers = {
       dispatcharr = {
         image = "ghcr.io/dispatcharr/dispatcharr:latest";
