@@ -164,6 +164,7 @@
       allowPing = true;
       enable = true;
       allowedTCPPorts = [
+        # 3080 # remux
         8123 # home-assistant
         8384 # syncthing web GUI
         8443 # incus https
@@ -475,6 +476,8 @@
     # projects: []
     # certificates: []
     # cluster: null
+    
+    # systemctl list-units 'podman-*'
     oci-containers.containers = {
       dispatcharr = {
         image = "ghcr.io/dispatcharr/dispatcharr:latest";
@@ -483,6 +486,13 @@
           "dispatcharr_data:/data"
         ];
       };
+      # remux = {
+      #   image = "ghcr.io/lostb1t/remux:latest";
+      #   ports = [ "3080:3000" ];
+      #   volumes = [
+      #     "/data:/data"
+      #   ];
+      # };
     };
   };
 }
